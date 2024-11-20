@@ -325,7 +325,9 @@ window.addEventListener('load', () => {
     console.log('页面加载完成，准备检查...');
     setTimeout(debouncedCheck, 3000);
 });
-
+function testabc(){
+    
+}
 // 初始检查
 console.log('初始化检查...');
 setTimeout(debouncedCheck, 3000);
