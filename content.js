@@ -234,12 +234,28 @@ async function checkEpicLink() {
             }
 
             // 检查并显示Epic Link警告
-            if (!epicLinkField || !epicLinkField.querySelector('.value')?.textContent.trim()) {
+            const epicLinkElement = document.querySelector('#customfield_11450-val');
+            console.log('Epic Link元素:', epicLinkElement);
+
+            let hasEpicLink = false;
+            if (epicLinkElement) {
+                const epicLinkValue = epicLinkElement.querySelector('a.aui-label');
+                if (epicLinkValue) {
+                    const linkText = epicLinkValue.textContent.trim();
+                    hasEpicLink = linkText && linkText !== '';
+                    console.log('Epic Link值:', linkText, '是否有效:', hasEpicLink);
+                }
+            }
+
+            // 修改判断条件
+            if (!hasEpicLink) {
+                console.log('Epic Link为空或无效，准备添加警告...');
                 if (!document.getElementById('no-epic-link')) {
                     const epicWarning = createWarningElement('NO EPIC LINK', 'customfield_11450-field');
                     warningsContainer.appendChild(epicWarning);
                 }
             } else {
+                console.log('找到有效的Epic Link');
                 const existingEpicWarning = document.getElementById('no-epic-link');
                 if (existingEpicWarning) {
                     existingEpicWarning.remove();
