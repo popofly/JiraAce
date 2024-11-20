@@ -54,21 +54,65 @@ async function checkEpicLink() {
         
         // 查找Epic Link字段
         let epicLinkField = null;
+        let hasEpicLink = false;  // 添加标志来跟踪Epic Link状态
+
         fields.forEach(field => {
             const label = field.querySelector('strong.name');
-            if (label) {
-                console.log('字段标签:', label.textContent);
-                if (label.textContent.trim() === 'Epic Link') {
-                    epicLinkField = field;
+            if (label && label.textContent.trim() === 'Epic Link') {
+                epicLinkField = field;
+                // 检查Epic Link的值
+                const valueElement = field.querySelector('.value');
+                if (valueElement) {
+                    const epicLinkValue = valueElement.textContent.trim();
+                    // 添加更多日志来调试
+                    console.log('找到Epic Link字段:', {
+                        field: epicLinkField,
+                        valueElement: valueElement,
+                        value: epicLinkValue,
+                        parentElement: field.parentElement
+                    });
+                    
+                    // 更严格的值检查
+                    hasEpicLink = epicLinkValue && 
+                                 epicLinkValue !== 'None' && 
+                                 epicLinkValue !== '-' &&
+                                 epicLinkValue !== 'null' &&
+                                 epicLinkValue !== 'undefined' &&
+                                 !epicLinkValue.includes('No epic link');
+                                 
+                    console.log('Epic Link值:', epicLinkValue, '是否有效:', hasEpicLink);
                 }
             }
         });
         
         console.log('Epic Link字段:', epicLinkField);
         
-        // 如果没有Epic Link或Epic Link为空，添加警告
-        if (!epicLinkField || !epicLinkField.querySelector('.value')?.textContent.trim()) {
-            console.log('未找到Epic Link或Epic Link为空，准备添加警告...');
+        // 直接通过ID查找Epic Link值元素
+        const epicLinkElement = document.querySelector('#customfield_11450-val');
+        console.log('Epic Link元素:', epicLinkElement);
+
+        if (epicLinkElement) {
+            // 检查是否有链接元素（表示有Epic Link值）
+            const epicLinkValue = epicLinkElement.querySelector('a.aui-label');
+            if (epicLinkValue) {
+                const linkText = epicLinkValue.textContent.trim();
+                hasEpicLink = linkText && linkText !== '';
+                console.log('Epic Link值:', linkText, '是否有效:', hasEpicLink);
+            } else {
+                console.log('未找到Epic Link值');
+                hasEpicLink = false;
+            }
+        }
+        
+        // 修改判断条件
+        if (!hasEpicLink) {
+            console.log('Epic Link为空或无效，准备添加警告...');
+            // 检查是否已存在警告
+            const existingWarning = document.getElementById('epic-link-warning');
+            if (existingWarning) {
+                console.log('警告已存在，不重复添加');
+                return;
+            }
             
             // 尝试找到标题元素
             const titleElement = document.querySelector('#summary-val');
@@ -187,7 +231,8 @@ async function checkEpicLink() {
                 console.log('未找到标题元素或警告已存在');
             }
         } else {
-            // 如果找到Epic Link且有值，移除已存在的警告
+            console.log('找到有效的Epic Link:', epicLinkElement.querySelector('a.aui-label').textContent);
+            // 移除已存在的警告
             const existingWarning = document.getElementById('epic-link-warning');
             if (existingWarning) {
                 existingWarning.remove();
