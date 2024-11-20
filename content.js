@@ -32,9 +32,8 @@ function isJiraIssuePage() {
     return isJiraUrl;  // 暂时只检查URL
 }
 
-// 创建警告元素的通用函数
-function createWarningElement(text) {
-    // 创建警告元素
+// 创建警告元素的通用���数
+function createWarningElement(text, fieldId) {
     const warningElement = document.createElement('div');
     warningElement.id = text.toLowerCase().replace(/\s+/g, '-');
     warningElement.style.cssText = `
@@ -112,6 +111,45 @@ function createWarningElement(text) {
         warningElement.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
     });
 
+    // 添加点击事件处理
+    warningElement.addEventListener('click', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        console.log(`${text} clicked`);
+        
+        // 查找Edit按钮
+        const editButton = 
+            document.querySelector('#edit-issue') || 
+            document.querySelector('button[id="edit-issue"]') || 
+            document.querySelector('button[aria-label="Edit issue"]');
+        
+        console.log('Found edit button:', editButton);
+        
+        if (editButton) {
+            console.log('Clicking edit button');
+            editButton.click();
+            
+            // 等待编辑界面加载完成并滚动到相应字段
+            try {
+                const field = await waitForElement(`#${fieldId}`, 20);
+                console.log(`${text} field found:`, field);
+                field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                field.focus();
+                
+                // 如果是Epic Link字段，尝试打开下拉菜单
+                if (fieldId === 'customfield_11450-field') {
+                    const dropdownButton = field.querySelector('button[aria-haspopup="listbox"]');
+                    if (dropdownButton) {
+                        dropdownButton.click();
+                    }
+                }
+            } catch (error) {
+                console.error(`Error finding ${text} field:`, error);
+            }
+        }
+    });
+
     return warningElement;
 }
 
@@ -174,7 +212,7 @@ async function checkEpicLink() {
             // 检查并显示Epic Link警告
             if (!epicLinkField || !epicLinkField.querySelector('.value')?.textContent.trim()) {
                 if (!document.getElementById('no-epic-link')) {
-                    const epicWarning = createWarningElement('NO EPIC LINK');
+                    const epicWarning = createWarningElement('NO EPIC LINK', 'customfield_11450-field');
                     warningsContainer.appendChild(epicWarning);
                 }
             } else {
@@ -187,7 +225,7 @@ async function checkEpicLink() {
             // 检查并显示Story Points警告
             if (!storyPointsField || !storyPointsField.textContent.trim()) {
                 if (!document.getElementById('no-story-point')) {
-                    const storyPointWarning = createWarningElement('NO STORY POINT');
+                    const storyPointWarning = createWarningElement('NO STORY POINT', 'customfield_10422');
                     warningsContainer.appendChild(storyPointWarning);
                 }
             } else {
