@@ -1,5 +1,5 @@
 // 创建一个函数来等待元素出现
-function waitForElement(selector, maxAttempts = 10) {
+function waitForElement(selector, maxAttempts = 20) {
     return new Promise((resolve, reject) => {
         let attempts = 0;
         
@@ -17,7 +17,7 @@ function waitForElement(selector, maxAttempts = 10) {
                 return;
             }
             
-            setTimeout(checkElement, 1000);
+            setTimeout(checkElement, 500);
         };
         
         checkElement();
@@ -149,6 +149,23 @@ function handleNoEpicLinkClick(event) {
     if (editButton) {
         console.log('Clicking edit button');
         editButton.click();
+        
+        // 等待编辑界面加载完成并滚动到Epic Link字段
+        waitForElement('#customfield_11450-field', 20)
+            .then(epicLinkField => {
+                console.log('Epic Link field found:', epicLinkField);
+                epicLinkField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                epicLinkField.focus();
+                
+                // 打开下拉菜单
+                const dropdownButton = epicLinkField.querySelector('button[aria-haspopup="listbox"]');
+                if (dropdownButton) {
+                    dropdownButton.click();
+                }
+            })
+            .catch(error => {
+                console.error('Error finding Epic Link field:', error);
+            });
     } else {
         console.log('Edit button not found');
         // 如果找不到按钮，尝试通过URL打开编辑页面
