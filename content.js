@@ -315,7 +315,7 @@ function createTicketKeyDisplay(ticketKey) {
     container.id = 'floating-ticket-key';
     container.style.cssText = `
         position: fixed;
-        bottom: 20px;
+        bottom: 70px;
         right: 20px;
         background-color: #0052CC;
         color: white;
@@ -324,7 +324,7 @@ function createTicketKeyDisplay(ticketKey) {
         font-size: 13px;
         font-weight: 500;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        z-index: 9999;
+        z-index: 9998;
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -536,15 +536,71 @@ function createTicketKeyDisplay(ticketKey) {
     return container;
 }
 
-// 检查和显示ticket key的函数
+// 创建logo按钮
+function createLogoButton() {
+    const logoButton = document.createElement('div');
+    logoButton.id = 'ticket-info-logo';
+    logoButton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background-color: #0052CC;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        z-index: 9999;
+    `;
+
+    // 创建SVG logo
+    logoButton.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+
+    // 添加悬停效果
+    logoButton.addEventListener('mouseover', () => {
+        logoButton.style.backgroundColor = '#0065FF';
+        logoButton.style.transform = 'translateY(-1px)';
+        logoButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+    });
+
+    logoButton.addEventListener('mouseout', () => {
+        logoButton.style.backgroundColor = '#0052CC';
+        logoButton.style.transform = 'translateY(0)';
+        logoButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+    });
+
+    // 添加点击切换面板显示的功能
+    logoButton.addEventListener('click', () => {
+        const infoPanel = document.getElementById('floating-ticket-key');
+        if (infoPanel) {
+            infoPanel.style.display = infoPanel.style.display === 'none' ? 'flex' : 'none';
+        } else {
+            checkAndDisplayTicketKey();
+        }
+    });
+
+    return logoButton;
+}
+
+// 修改checkAndDisplayTicketKey函数
 function checkAndDisplayTicketKey() {
     try {
         // 检查是否是ticket页面
         if (!window.location.href.includes('/browse/')) {
             const existingDisplay = document.getElementById('floating-ticket-key');
-            if (existingDisplay) {
-                existingDisplay.remove();
-            }
+            const existingLogo = document.getElementById('ticket-info-logo');
+            if (existingDisplay) existingDisplay.remove();
+            if (existingLogo) existingLogo.remove();
             return;
         }
 
@@ -555,18 +611,26 @@ function checkAndDisplayTicketKey() {
         const ticketKey = match[1];
         console.log('Found ticket key:', ticketKey);
 
-        // 检查是否已存在显示元素
+        // 确保logo按钮存在
+        let logoButton = document.getElementById('ticket-info-logo');
+        if (!logoButton) {
+            logoButton = createLogoButton();
+            document.body.appendChild(logoButton);
+        }
+
+        // 检查是否已存在信息面板
         let keyDisplay = document.getElementById('floating-ticket-key');
         if (keyDisplay) {
-            // 找到链接元素并更新其内容
+            // 更新内容但保持显示状态
             const linkElement = keyDisplay.querySelector('a');
             if (linkElement) {
                 linkElement.textContent = ticketKey;
                 linkElement.href = `/browse/${ticketKey}`;
             }
         } else {
-            // 创建新的显示元素
+            // 创建新的信息面板，默认隐藏
             keyDisplay = createTicketKeyDisplay(ticketKey);
+            keyDisplay.style.display = 'none';
             document.body.appendChild(keyDisplay);
         }
     } catch (error) {
