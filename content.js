@@ -32,7 +32,7 @@ function isJiraIssuePage() {
     return isJiraUrl;  // 暂时只检查URL
 }
 
-// 创建警告元素的通用���
+// 创建警告元素的通用
 function createWarningElement(text, fieldId) {
     const warningElement = document.createElement('div');
     warningElement.id = text.toLowerCase().replace(/\s+/g, '-');
@@ -186,7 +186,22 @@ async function checkEpicLink() {
         const ticketType = typeElement ? typeElement.textContent.trim() : '';
         console.log('Ticket类型:', ticketType);
         
-        // 定义需要Story Points的ticket类型
+        // 定义需要检查的ticket类型
+        const typesNeedingCheck = ['Technical task', 'Improvement', 'User Story', 'QA Task'];
+        const needsCheck = typesNeedingCheck.includes(ticketType);
+        
+        // 如果不是需要检查的类型，直接返回
+        if (!needsCheck) {
+            console.log('当前ticket类型不需要检查Epic Link和Story Points');
+            // 移除已存在的警告
+            const warningsContainer = document.getElementById('warnings-container');
+            if (warningsContainer) {
+                warningsContainer.remove();
+            }
+            return;
+        }
+        
+        // 定义需要Story Points的ticket类型（不包括QA Task）
         const typesNeedingStoryPoints = ['Technical task', 'Improvement', 'User Story'];
         const needsStoryPoints = typesNeedingStoryPoints.includes(ticketType);
         
