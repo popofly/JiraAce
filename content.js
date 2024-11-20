@@ -98,7 +98,7 @@ async function checkEpicLink() {
                     cursor: pointer;
                     transition: background-color 0.3s;
                 `;
-                
+
                 // 添加悬停效果
                 warningElement.addEventListener('mouseover', () => {
                     warningElement.style.backgroundColor = '#ffcccc';
@@ -108,7 +108,7 @@ async function checkEpicLink() {
                     warningElement.style.backgroundColor = '#ffe6e6';
                 });
 
-                // 在创建完警告元素后立即添加点击处理
+                // 添加点击事件
                 warningElement.addEventListener('click', handleNoEpicLinkClick);
                 
                 // 将警告插入到标题元素后面
@@ -127,6 +127,37 @@ async function checkEpicLink() {
         }
     } catch (error) {
         console.log('检查过程中出错:', error);
+    }
+}
+
+// 处理NO EPIC LINK点击事件
+function handleNoEpicLinkClick(event) {
+    // 防止事件冒泡
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('NO EPIC LINK clicked');
+    
+    // 使用正确的选择器查找Edit按钮
+    const editButton = 
+        document.querySelector('#edit-issue') || // 使用ID选择器
+        document.querySelector('button[id="edit-issue"]') || // 备选方案1
+        document.querySelector('button[aria-label="Edit issue"]'); // 备选方案2
+    
+    console.log('Found edit button:', editButton);
+    
+    if (editButton) {
+        console.log('Clicking edit button');
+        editButton.click();
+    } else {
+        console.log('Edit button not found');
+        // 如果找不到按钮，尝试通过URL打开编辑页面
+        const currentUrl = window.location.href;
+        const issueKey = currentUrl.split('/browse/')[1]?.split(/[?#]/)[0];
+        if (issueKey) {
+            console.log('Navigating to edit page for issue:', issueKey);
+            window.location.href = `/secure/EditIssue!default.jspa?id=${issueKey}`;
+        }
     }
 }
 
@@ -155,9 +186,6 @@ new MutationObserver((mutations) => {
         console.log('URL changed to', url);
         setTimeout(debouncedCheck, 3000);
     }
-    
-    // 添加NO EPIC LINK点击处理
-    addNoEpicLinkClickHandler();
 }).observe(document, {subtree: true, childList: true});
 
 // 页面加载完成后执行检查
@@ -169,34 +197,4 @@ window.addEventListener('load', () => {
 // 初始检查
 console.log('初始化检查...');
 setTimeout(debouncedCheck, 3000);
-
-function handleNoEpicLinkClick(event) {
-    // 防止事件冒泡
-    event.preventDefault();
-    event.stopPropagation();
-    
-    // 获取当前页面的Edit按钮并触发点击
-    const editButton = document.querySelector('button[aria-label="Edit issue"]');
-    if (editButton) {
-        editButton.click();
-    }
-}
-
-function addNoEpicLinkClickHandler() {
-    // 使用正确的选择器 - 通过id查找警告元素
-    const warningElement = document.getElementById('epic-link-warning');
-    
-    if (warningElement && !warningElement.classList.contains('click-handler-added')) {
-        // 添加鼠标样式，表明可点击
-        warningElement.style.cursor = 'pointer';
-        
-        // 添加点击事件监听器
-        warningElement.addEventListener('click', handleNoEpicLinkClick);
-        
-        // 标记已添加事件监听器
-        warningElement.classList.add('click-handler-added');
-        
-        console.log('Click handler added to warning element');
-    }
-}
   
