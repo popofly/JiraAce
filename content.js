@@ -309,24 +309,185 @@ function debounce(func, wait) {
 // 使用防抖动的检查函数
 const debouncedCheck = debounce(checkEpicLink, 1000);
 
-// 监听URL变化
+// 创建显示ticket key的浮动元素
+function createTicketKeyDisplay(ticketKey) {
+    const keyDisplay = document.createElement('div');
+    keyDisplay.id = 'floating-ticket-key';
+    keyDisplay.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #0052CC;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 3px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    `;
+
+    // 创建链接元素
+    const link = document.createElement('a');
+    link.href = `/browse/${ticketKey}`;
+    link.textContent = ticketKey;
+    link.target = '_blank';  // 在新窗口打开
+    link.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+    // 创建复制按钮
+    const copyButton = document.createElement('button');
+    copyButton.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 9H11C9.89543 9 9 9.89543 9 11V20C9 21.1046 9.89543 22 11 22H20C21.1046 22 22 21.1046 22 20V11C22 9.89543 21.1046 9 20 9Z" 
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" 
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    copyButton.style.cssText = `
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+    `;
+
+    // 添加复制按钮的悬停效果
+    copyButton.addEventListener('mouseover', () => {
+        copyButton.style.opacity = '1';
+    });
+
+    copyButton.addEventListener('mouseout', () => {
+        copyButton.style.opacity = '0.8';
+    });
+
+    // 添加复制功能
+    copyButton.addEventListener('click', async () => {
+        // 构建富文本内容
+        const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
+        
+        try {
+            // 创建包含富文本和HTML的剪贴板数据
+            const clipboardData = new ClipboardItem({
+                'text/plain': new Blob([ticketKey], { type: 'text/plain' }),
+                'text/html': new Blob([`<a href="${fullUrl}" target="_blank">${ticketKey}</a>`], { type: 'text/html' })
+            });
+            
+            // 使用新的clipboard API复制富文本
+            await navigator.clipboard.write([clipboardData]);
+
+            // 显示复制成功的临时提示
+            const originalHTML = copyButton.innerHTML;
+            copyButton.innerHTML = '✓';
+            setTimeout(() => {
+                copyButton.innerHTML = originalHTML;
+            }, 1000);
+        } catch (error) {
+            console.error('复制失败:', error);
+        }
+    });
+
+    // 添加整体容器的悬停效果
+    keyDisplay.addEventListener('mouseover', () => {
+        keyDisplay.style.backgroundColor = '#0065FF';
+        keyDisplay.style.transform = 'translateY(-1px)';
+        keyDisplay.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+    });
+
+    keyDisplay.addEventListener('mouseout', () => {
+        keyDisplay.style.backgroundColor = '#0052CC';
+        keyDisplay.style.transform = 'translateY(0)';
+        keyDisplay.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+    });
+
+    // 将链接和复制按钮添加到容器中
+    keyDisplay.appendChild(link);
+    keyDisplay.appendChild(copyButton);
+
+    return keyDisplay;
+}
+
+// 检查和显示ticket key的函数
+function checkAndDisplayTicketKey() {
+    try {
+        // 检查是否是ticket页面
+        if (!window.location.href.includes('/browse/')) {
+            const existingDisplay = document.getElementById('floating-ticket-key');
+            if (existingDisplay) {
+                existingDisplay.remove();
+            }
+            return;
+        }
+
+        // 从URL中提取ticket key
+        const match = window.location.pathname.match(/\/browse\/([^/]+)/);
+        if (!match) return;
+
+        const ticketKey = match[1];
+        console.log('Found ticket key:', ticketKey);
+
+        // 检查是否已存在显示元素
+        let keyDisplay = document.getElementById('floating-ticket-key');
+        if (keyDisplay) {
+            // 找到链接元素并更新其内容
+            const linkElement = keyDisplay.querySelector('a');
+            if (linkElement) {
+                linkElement.textContent = ticketKey;
+                linkElement.href = `/browse/${ticketKey}`;
+            }
+        } else {
+            // 创建新的显示元素
+            keyDisplay = createTicketKeyDisplay(ticketKey);
+            document.body.appendChild(keyDisplay);
+        }
+    } catch (error) {
+        console.log('显示ticket key时出错:', error);
+    }
+}
+
+// 将checkAndDisplayTicketKey添加到现有的URL监听中
+const debouncedDisplayKey = debounce(checkAndDisplayTicketKey, 1000);
+
+// 修改现有的URL监听器
 let lastUrl = location.href;
 new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
         console.log('URL changed to', url);
-        setTimeout(debouncedCheck, 3000);
+        setTimeout(() => {
+            debouncedCheck();
+            debouncedDisplayKey();
+        }, 3000);
     }
 }).observe(document, {subtree: true, childList: true});
 
-// 页面加载完成后执行检查
+// 在页面加载完成后执行
 window.addEventListener('load', () => {
     console.log('页面加载完成，准备检查...');
-    setTimeout(debouncedCheck, 3000);
+    setTimeout(() => {
+        debouncedCheck();
+        debouncedDisplayKey();
+    }, 3000);
 });
-    
+
 // 初始检查
 console.log('初始化检查...');
-setTimeout(debouncedCheck, 3000);
+setTimeout(() => {
+    debouncedCheck();
+    debouncedDisplayKey();
+}, 3000);
   
