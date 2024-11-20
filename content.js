@@ -309,11 +309,11 @@ function debounce(func, wait) {
 // 使用防抖动的检查函数
 const debouncedCheck = debounce(checkEpicLink, 1000);
 
-// 创建显示ticket key的浮动元素
+// 修改createTicketKeyDisplay函数
 function createTicketKeyDisplay(ticketKey) {
-    const keyDisplay = document.createElement('div');
-    keyDisplay.id = 'floating-ticket-key';
-    keyDisplay.style.cssText = `
+    const container = document.createElement('div');
+    container.id = 'floating-ticket-key';
+    container.style.cssText = `
         position: fixed;
         bottom: 20px;
         right: 20px;
@@ -326,98 +326,146 @@ function createTicketKeyDisplay(ticketKey) {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         z-index: 9999;
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 8px;
         transition: all 0.2s ease;
     `;
 
-    // 创建链接元素
-    const link = document.createElement('a');
-    link.href = `/browse/${ticketKey}`;
-    link.textContent = ticketKey;
-    link.target = '_blank';  // 在新窗口打开
-    link.style.cssText = `
+    // 创建第一行（ticket key）
+    const keyRow = document.createElement('div');
+    keyRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+
+    // 创建第二行（summary）
+    const summaryRow = document.createElement('div');
+    summaryRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+    // 获取summary
+    const titleElement = document.querySelector('#summary-val');
+    const summary = titleElement ? titleElement.textContent.trim() : '';
+
+    // 创建链接元素（第一行）
+    const keyLink = document.createElement('a');
+    keyLink.href = `/browse/${ticketKey}`;
+    keyLink.textContent = ticketKey;
+    keyLink.target = '_blank';
+    keyLink.style.cssText = `
         color: white;
         text-decoration: none;
         cursor: pointer;
     `;
 
-    // 创建复制按钮
-    const copyButton = document.createElement('button');
-    copyButton.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 9H11C9.89543 9 9 9.89543 9 11V20C9 21.1046 9.89543 22 11 22H20C21.1046 22 22 21.1046 22 20V11C22 9.89543 21.1046 9 20 9Z" 
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" 
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-    `;
-    copyButton.style.cssText = `
-        background: none;
-        border: none;
+    // 创建链接元素（第二行）
+    const summaryLink = document.createElement('a');
+    summaryLink.href = `/browse/${ticketKey}`;
+    summaryLink.target = '_blank';
+    summaryLink.style.cssText = `
         color: white;
+        text-decoration: none;
         cursor: pointer;
-        padding: 2px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0.8;
-        transition: opacity 0.2s ease;
+        max-width: 300px;
+        display: inline-block;
     `;
 
-    // 添加复制按钮的悬停效果
-    copyButton.addEventListener('mouseover', () => {
-        copyButton.style.opacity = '1';
-    });
+    // 处理summary文本
+    if (summary.length > 43) {  // 20 + 3 + 20 = 43
+        summaryLink.textContent = summary.substring(0, 20) + '...' + summary.substring(summary.length - 20);
+        // 添加完整summary作为tooltip
+        summaryLink.title = summary;
+    } else {
+        summaryLink.textContent = summary;
+    }
 
-    copyButton.addEventListener('mouseout', () => {
-        copyButton.style.opacity = '0.8';
-    });
+    // 创建复制按钮的通用函数
+    function createCopyButton(contentType) {
+        const button = document.createElement('button');
+        button.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 9H11C9.89543 9 9 9.89543 9 11V20C9 21.1046 9.89543 22 11 22H20C21.1046 22 22 21.1046 22 20V11C22 9.89543 21.1046 9 20 9Z" 
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" 
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        button.style.cssText = `
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        `;
 
-    // 添加复制功能
-    copyButton.addEventListener('click', async () => {
-        // 构建富文本内容
+        button.addEventListener('mouseover', () => button.style.opacity = '1');
+        button.addEventListener('mouseout', () => button.style.opacity = '0.8');
+
         const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
-        
-        try {
-            // 创建包含富文本和HTML的剪贴板数据
-            const clipboardData = new ClipboardItem({
-                'text/plain': new Blob([ticketKey], { type: 'text/plain' }),
-                'text/html': new Blob([`<a href="${fullUrl}" target="_blank">${ticketKey}</a>`], { type: 'text/html' })
-            });
-            
-            // 使用新的clipboard API复制富文本
-            await navigator.clipboard.write([clipboardData]);
+        button.addEventListener('click', async () => {
+            try {
+                const text = contentType === 'key' ? ticketKey : summary;
+                const clipboardData = new ClipboardItem({
+                    'text/plain': new Blob([text], { type: 'text/plain' }),
+                    'text/html': new Blob([`<a href="${fullUrl}" target="_blank">${text}</a>`], { type: 'text/html' })
+                });
+                
+                await navigator.clipboard.write([clipboardData]);
 
-            // 显示复制成功的临时提示
-            const originalHTML = copyButton.innerHTML;
-            copyButton.innerHTML = '✓';
-            setTimeout(() => {
-                copyButton.innerHTML = originalHTML;
-            }, 1000);
-        } catch (error) {
-            console.error('复制失败:', error);
-        }
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '✓';
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 1000);
+            } catch (error) {
+                console.error('复制失败:', error);
+            }
+        });
+
+        return button;
+    }
+
+    // 创建两个复制按钮
+    const keyCopyButton = createCopyButton('key');
+    const summaryCopyButton = createCopyButton('summary');
+
+    // 组装第一行
+    keyRow.appendChild(keyLink);
+    keyRow.appendChild(keyCopyButton);
+
+    // 组装第二行
+    summaryRow.appendChild(summaryLink);
+    summaryRow.appendChild(summaryCopyButton);
+
+    // 添加悬停效果
+    container.addEventListener('mouseover', () => {
+        container.style.backgroundColor = '#0065FF';
+        container.style.transform = 'translateY(-1px)';
+        container.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
     });
 
-    // 添加整体容器的悬停效果
-    keyDisplay.addEventListener('mouseover', () => {
-        keyDisplay.style.backgroundColor = '#0065FF';
-        keyDisplay.style.transform = 'translateY(-1px)';
-        keyDisplay.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+    container.addEventListener('mouseout', () => {
+        container.style.backgroundColor = '#0052CC';
+        container.style.transform = 'translateY(0)';
+        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
     });
 
-    keyDisplay.addEventListener('mouseout', () => {
-        keyDisplay.style.backgroundColor = '#0052CC';
-        keyDisplay.style.transform = 'translateY(0)';
-        keyDisplay.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
-    });
+    // 组装容器
+    container.appendChild(keyRow);
+    container.appendChild(summaryRow);
 
-    // 将链接和复制按钮添加到容器中
-    keyDisplay.appendChild(link);
-    keyDisplay.appendChild(copyButton);
-
-    return keyDisplay;
+    return container;
 }
 
 // 检查和显示ticket key的函数
