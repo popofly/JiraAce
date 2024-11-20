@@ -32,7 +32,7 @@ function isJiraIssuePage() {
     return isJiraUrl;  // 暂时只检查URL
 }
 
-// 创建警告元素的通用���数
+// 创建警告元素的通用���
 function createWarningElement(text, fieldId) {
     const warningElement = document.createElement('div');
     warningElement.id = text.toLowerCase().replace(/\s+/g, '-');
@@ -181,6 +181,15 @@ async function checkEpicLink() {
         // 等待页面加载完成
         await new Promise(resolve => setTimeout(resolve, 3000));
         
+        // 获取ticket类型
+        const typeElement = document.getElementById('type-val');
+        const ticketType = typeElement ? typeElement.textContent.trim() : '';
+        console.log('Ticket类型:', ticketType);
+        
+        // 定义需要Story Points的ticket类型
+        const typesNeedingStoryPoints = ['Technical task', 'Improvement', 'User Story'];
+        const needsStoryPoints = typesNeedingStoryPoints.includes(ticketType);
+        
         // 获取所有字段列表项
         const fields = document.querySelectorAll('li.item');
         console.log('找到字段数量:', fields.length);
@@ -194,8 +203,8 @@ async function checkEpicLink() {
             }
         });
         
-        // 查找Story Points字段
-        const storyPointsField = document.getElementById('rowForcustomfield_10422');
+        // 只在特定类型的ticket下才检查Story Points字段
+        const storyPointsField = needsStoryPoints ? document.getElementById('rowForcustomfield_10422') : null;
         console.log('Story Points字段:', storyPointsField);
         
         // 获取标题元素
@@ -222,13 +231,21 @@ async function checkEpicLink() {
                 }
             }
 
-            // 检查并显示Story Points警告
-            if (!storyPointsField || !storyPointsField.textContent.trim()) {
-                if (!document.getElementById('no-story-point')) {
-                    const storyPointWarning = createWarningElement('NO STORY POINT', 'customfield_10422');
-                    warningsContainer.appendChild(storyPointWarning);
+            // 只在需要Story Points的ticket类型下显示Story Points警告
+            if (needsStoryPoints) {
+                if (!storyPointsField || !storyPointsField.textContent.trim()) {
+                    if (!document.getElementById('no-story-point')) {
+                        const storyPointWarning = createWarningElement('NO STORY POINT', 'customfield_10422');
+                        warningsContainer.appendChild(storyPointWarning);
+                    }
+                } else {
+                    const existingStoryPointWarning = document.getElementById('no-story-point');
+                    if (existingStoryPointWarning) {
+                        existingStoryPointWarning.remove();
+                    }
                 }
             } else {
+                // 如果不需要Story Points，移除已存在的警告
                 const existingStoryPointWarning = document.getElementById('no-story-point');
                 if (existingStoryPointWarning) {
                     existingStoryPointWarning.remove();
