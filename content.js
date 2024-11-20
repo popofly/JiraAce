@@ -415,10 +415,27 @@ function createTicketKeyDisplay(ticketKey) {
         const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
         button.addEventListener('click', async () => {
             try {
-                const text = contentType === 'key' ? ticketKey : summary;
+                let text, htmlText;
+                const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
+                
+                switch(contentType) {
+                    case 'key':
+                        text = ticketKey;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${ticketKey}</a>`;
+                        break;
+                    case 'summary':
+                        text = summary;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${summary}</a>`;
+                        break;
+                    case 'titleKey':
+                        text = `${summary} (${ticketKey})`;
+                        htmlText = `${summary} (<a href="${fullUrl}" target="_blank">${ticketKey}</a>)`;
+                        break;
+                }
+
                 const clipboardData = new ClipboardItem({
                     'text/plain': new Blob([text], { type: 'text/plain' }),
-                    'text/html': new Blob([`<a href="${fullUrl}" target="_blank">${text}</a>`], { type: 'text/html' })
+                    'text/html': new Blob([htmlText], { type: 'text/html' })
                 });
                 
                 await navigator.clipboard.write([clipboardData]);
@@ -448,6 +465,56 @@ function createTicketKeyDisplay(ticketKey) {
     summaryRow.appendChild(summaryLink);
     summaryRow.appendChild(summaryCopyButton);
 
+    // 修改第三行的创建部分
+    const titleKeyRow = document.createElement('div');
+    titleKeyRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+    // 创建标题文本元素（非链接）
+    const titleSpan = document.createElement('span');
+    titleSpan.style.cssText = `
+        color: white;
+        max-width: 300px;
+        display: inline-block;
+    `;
+
+    // 处理标题文本
+    const titleText = summary.length > 43 ? 
+        summary.substring(0, 20) + '...' + summary.substring(summary.length - 20) :
+        summary;
+    titleSpan.textContent = titleText + ' (';
+    titleSpan.title = summary; // 完整文本作为tooltip
+
+    // 创建ticket key链接 - 改名为titleKeyLink
+    const titleKeyLink = document.createElement('a');
+    titleKeyLink.href = `/browse/${ticketKey}`;
+    titleKeyLink.textContent = ticketKey;
+    titleKeyLink.target = '_blank';
+    titleKeyLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+    // 创建结束括号文本
+    const closingSpan = document.createElement('span');
+    closingSpan.textContent = ')';
+    closingSpan.style.color = 'white';
+
+    // 在第三行组装之前添加复制按钮的创建
+    const titleKeyCopyButton = createCopyButton('titleKey');
+
+    // 组装第三行
+    titleKeyRow.appendChild(titleSpan);
+    titleKeyRow.appendChild(titleKeyLink);
+    titleKeyRow.appendChild(closingSpan);
+    titleKeyRow.appendChild(titleKeyCopyButton);
+
     // 添加悬停效果
     container.addEventListener('mouseover', () => {
         container.style.backgroundColor = '#0065FF';
@@ -464,6 +531,7 @@ function createTicketKeyDisplay(ticketKey) {
     // 组装容器
     container.appendChild(keyRow);
     container.appendChild(summaryRow);
+    container.appendChild(titleKeyRow);
 
     return container;
 }
