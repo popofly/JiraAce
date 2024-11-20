@@ -536,7 +536,7 @@ function createTicketKeyDisplay(ticketKey) {
     return container;
 }
 
-// 创建logo按钮
+// 修改createLogoButton函数
 function createLogoButton() {
     const logoButton = document.createElement('div');
     logoButton.id = 'ticket-info-logo';
@@ -544,42 +544,96 @@ function createLogoButton() {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
-        background-color: #0052CC;
+        width: 32px;
+        height: 32px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: all 0.2s ease;
         z-index: 9999;
     `;
 
-    // 创建SVG logo
+    // SVG内容保持不变
     logoButton.innerHTML = `
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 背景 -->
+            <rect width="128" height="128" rx="28" fill="#0052CC"/>
+            
+            <!-- 主体：扑克牌形状 -->
+            <path d="
+                M 32 24
+                H 96
+                C 100.418 24 104 27.582 104 32
+                V 96
+                C 104 100.418 100.418 104 96 104
+                H 32
+                C 27.582 104 24 100.418 24 96
+                V 32
+                C 24 27.582 27.582 24 32 24
+                Z
+            "
+            fill="#FFFFFF"
+            stroke="#0052CC"
+            stroke-width="2"
+            />
+
+            <!-- J字母 -->
+            <path d="
+                M 80 44
+                V 74
+                C 80 78.418 76.418 82 72 82
+                H 56
+                C 51.582 82 48 78.418 48 74
+            "
+            stroke="#0052CC"
+            stroke-width="12"
+            stroke-linecap="round"
+            />
+
+            <!-- 右上角的A -->
+            <path d="
+                M 72 34
+                L 82 48
+                H 78
+                L 72 38
+                L 66 48
+                H 62
+                L 72 34
+                Z
+            "
+            fill="#FF4B6E"
+            />
+
+            <!-- 左下角的A -->
+            <path d="
+                M 46 80
+                L 56 94
+                H 52
+                L 46 84
+                L 40 94
+                H 36
+                L 46 80
+                Z
+            "
+            fill="#FF4B6E"
+            transform="rotate(180 46 87)"
+            />
         </svg>
     `;
 
-    // 添加悬停效果
+    // 修改悬停效果，只改变缩放和阴影
     logoButton.addEventListener('mouseover', () => {
-        logoButton.style.backgroundColor = '#0065FF';
-        logoButton.style.transform = 'translateY(-1px)';
-        logoButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+        logoButton.style.transform = 'translateY(-1px) scale(1.1)';
+        logoButton.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))';
     });
 
     logoButton.addEventListener('mouseout', () => {
-        logoButton.style.backgroundColor = '#0052CC';
-        logoButton.style.transform = 'translateY(0)';
-        logoButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+        logoButton.style.transform = 'translateY(0) scale(1)';
+        logoButton.style.filter = 'none';
     });
 
-    // 添加点击切换面板显示的功能
+    // 点击事件保持不变
     logoButton.addEventListener('click', () => {
         const infoPanel = document.getElementById('floating-ticket-key');
         if (infoPanel) {
