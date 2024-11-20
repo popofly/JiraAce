@@ -95,7 +95,21 @@ async function checkEpicLink() {
                     position: relative;
                     z-index: 1000;
                     width: fit-content;
+                    cursor: pointer;
+                    transition: background-color 0.3s;
                 `;
+                
+                // 添加悬停效果
+                warningElement.addEventListener('mouseover', () => {
+                    warningElement.style.backgroundColor = '#ffcccc';
+                });
+
+                warningElement.addEventListener('mouseout', () => {
+                    warningElement.style.backgroundColor = '#ffe6e6';
+                });
+
+                // 在创建完警告元素后立即添加点击处理
+                warningElement.addEventListener('click', handleNoEpicLinkClick);
                 
                 // 将警告插入到标题元素后面
                 titleElement.insertAdjacentElement('afterend', warningElement);
@@ -134,13 +148,16 @@ const debouncedCheck = debounce(checkEpicLink, 1000);
 
 // 监听URL变化
 let lastUrl = location.href;
-new MutationObserver(() => {
+new MutationObserver((mutations) => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
         console.log('URL changed to', url);
         setTimeout(debouncedCheck, 3000);
     }
+    
+    // 添加NO EPIC LINK点击处理
+    addNoEpicLinkClickHandler();
 }).observe(document, {subtree: true, childList: true});
 
 // 页面加载完成后执行检查
@@ -152,4 +169,34 @@ window.addEventListener('load', () => {
 // 初始检查
 console.log('初始化检查...');
 setTimeout(debouncedCheck, 3000);
+
+function handleNoEpicLinkClick(event) {
+    // 防止事件冒泡
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // 获取当前页面的Edit按钮并触发点击
+    const editButton = document.querySelector('button[aria-label="Edit issue"]');
+    if (editButton) {
+        editButton.click();
+    }
+}
+
+function addNoEpicLinkClickHandler() {
+    // 使用正确的选择器 - 通过id查找警告元素
+    const warningElement = document.getElementById('epic-link-warning');
+    
+    if (warningElement && !warningElement.classList.contains('click-handler-added')) {
+        // 添加鼠标样式，表明可点击
+        warningElement.style.cursor = 'pointer';
+        
+        // 添加点击事件监听器
+        warningElement.addEventListener('click', handleNoEpicLinkClick);
+        
+        // 标记已添加事件监听器
+        warningElement.classList.add('click-handler-added');
+        
+        console.log('Click handler added to warning element');
+    }
+}
   
