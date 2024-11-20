@@ -1,4 +1,4 @@
-// 创建一个函数来等待元素出现
+// 创建一个函数来等待元素出现，
 function waitForElement(selector, maxAttempts = 10) {
     return new Promise((resolve, reject) => {
         let attempts = 0;
