@@ -309,26 +309,421 @@ function debounce(func, wait) {
 // 使用防抖动的检查函数
 const debouncedCheck = debounce(checkEpicLink, 1000);
 
-// 监听URL变化
+// 修改createTicketKeyDisplay函数
+function createTicketKeyDisplay(ticketKey) {
+    const container = document.createElement('div');
+    container.id = 'floating-ticket-key';
+    container.style.cssText = `
+        position: fixed;
+        bottom: 70px;
+        right: 20px;
+        background-color: #0052CC;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 3px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 9998;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        transition: all 0.2s ease;
+    `;
+
+    // 创建第一行（ticket key）
+    const keyRow = document.createElement('div');
+    keyRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    `;
+
+    // 创建第二行（summary）
+    const summaryRow = document.createElement('div');
+    summaryRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+    // 获取summary
+    const titleElement = document.querySelector('#summary-val');
+    const summary = titleElement ? titleElement.textContent.trim() : '';
+
+    // 创建链接元素（第一行）
+    const keyLink = document.createElement('a');
+    keyLink.href = `/browse/${ticketKey}`;
+    keyLink.textContent = ticketKey;
+    keyLink.target = '_blank';
+    keyLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+    // 创建链接元素（第二行）
+    const summaryLink = document.createElement('a');
+    summaryLink.href = `/browse/${ticketKey}`;
+    summaryLink.target = '_blank';
+    summaryLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+        max-width: 300px;
+        display: inline-block;
+    `;
+
+    // 处理summary文本
+    if (summary.length > 43) {  // 20 + 3 + 20 = 43
+        summaryLink.textContent = summary.substring(0, 20) + '...' + summary.substring(summary.length - 20);
+        // 添加完整summary作为tooltip
+        summaryLink.title = summary;
+    } else {
+        summaryLink.textContent = summary;
+    }
+
+    // 创建复制按钮的通用函数
+    function createCopyButton(contentType) {
+        const button = document.createElement('button');
+        button.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 9H11C9.89543 9 9 9.89543 9 11V20C9 21.1046 9.89543 22 11 22H20C21.1046 22 22 21.1046 22 20V11C22 9.89543 21.1046 9 20 9Z" 
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5" 
+                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        button.style.cssText = `
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        `;
+
+        button.addEventListener('mouseover', () => button.style.opacity = '1');
+        button.addEventListener('mouseout', () => button.style.opacity = '0.8');
+
+        const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
+        button.addEventListener('click', async () => {
+            try {
+                let text, htmlText;
+                const fullUrl = `${window.location.origin}/browse/${ticketKey}`;
+                
+                switch(contentType) {
+                    case 'key':
+                        text = ticketKey;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${ticketKey}</a>`;
+                        break;
+                    case 'summary':
+                        text = summary;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${summary}</a>`;
+                        break;
+                    case 'titleKey':
+                        text = `${summary} (${ticketKey})`;
+                        htmlText = `${summary} (<a href="${fullUrl}" target="_blank">${ticketKey}</a>)`;
+                        break;
+                }
+
+                const clipboardData = new ClipboardItem({
+                    'text/plain': new Blob([text], { type: 'text/plain' }),
+                    'text/html': new Blob([htmlText], { type: 'text/html' })
+                });
+                
+                await navigator.clipboard.write([clipboardData]);
+
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '✓';
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                }, 1000);
+            } catch (error) {
+                console.error('复制失败:', error);
+            }
+        });
+
+        return button;
+    }
+
+    // 创建两个复制按钮
+    const keyCopyButton = createCopyButton('key');
+    const summaryCopyButton = createCopyButton('summary');
+
+    // 组装第一行
+    keyRow.appendChild(keyLink);
+    keyRow.appendChild(keyCopyButton);
+
+    // 组装第二行
+    summaryRow.appendChild(summaryLink);
+    summaryRow.appendChild(summaryCopyButton);
+
+    // 修改第三行的创建部分
+    const titleKeyRow = document.createElement('div');
+    titleKeyRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+    // 创建标题文本元素（非链接）
+    const titleSpan = document.createElement('span');
+    titleSpan.style.cssText = `
+        color: white;
+        max-width: 300px;
+        display: inline-block;
+    `;
+
+    // 处理标题文本
+    const titleText = summary.length > 43 ? 
+        summary.substring(0, 20) + '...' + summary.substring(summary.length - 20) :
+        summary;
+    titleSpan.textContent = titleText + ' (';
+    titleSpan.title = summary; // 完整文本作为tooltip
+
+    // 创建ticket key链接 - 改名为titleKeyLink
+    const titleKeyLink = document.createElement('a');
+    titleKeyLink.href = `/browse/${ticketKey}`;
+    titleKeyLink.textContent = ticketKey;
+    titleKeyLink.target = '_blank';
+    titleKeyLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+    // 创建结束括号文本
+    const closingSpan = document.createElement('span');
+    closingSpan.textContent = ')';
+    closingSpan.style.color = 'white';
+
+    // 在第三行组装之前添加复制按钮的创建
+    const titleKeyCopyButton = createCopyButton('titleKey');
+
+    // 组装第三行
+    titleKeyRow.appendChild(titleSpan);
+    titleKeyRow.appendChild(titleKeyLink);
+    titleKeyRow.appendChild(closingSpan);
+    titleKeyRow.appendChild(titleKeyCopyButton);
+
+    // 添加悬停效果
+    container.addEventListener('mouseover', () => {
+        container.style.backgroundColor = '#0065FF';
+        container.style.transform = 'translateY(-1px)';
+        container.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+    });
+
+    container.addEventListener('mouseout', () => {
+        container.style.backgroundColor = '#0052CC';
+        container.style.transform = 'translateY(0)';
+        container.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+    });
+
+    // 组装容器
+    container.appendChild(keyRow);
+    container.appendChild(summaryRow);
+    container.appendChild(titleKeyRow);
+
+    return container;
+}
+
+// 修改createLogoButton函数
+function createLogoButton() {
+    const logoButton = document.createElement('div');
+    logoButton.id = 'ticket-info-logo';
+    logoButton.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        z-index: 9999;
+    `;
+
+    // SVG内容保持不变
+    logoButton.innerHTML = `
+        <svg width="32" height="32" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 背景 -->
+            <rect width="128" height="128" rx="28" fill="#0052CC"/>
+            
+            <!-- 主体：扑克牌形状 -->
+            <path d="
+                M 32 24
+                H 96
+                C 100.418 24 104 27.582 104 32
+                V 96
+                C 104 100.418 100.418 104 96 104
+                H 32
+                C 27.582 104 24 100.418 24 96
+                V 32
+                C 24 27.582 27.582 24 32 24
+                Z
+            "
+            fill="#FFFFFF"
+            stroke="#0052CC"
+            stroke-width="2"
+            />
+
+            <!-- J字母 -->
+            <path d="
+                M 80 44
+                V 74
+                C 80 78.418 76.418 82 72 82
+                H 56
+                C 51.582 82 48 78.418 48 74
+            "
+            stroke="#0052CC"
+            stroke-width="12"
+            stroke-linecap="round"
+            />
+
+            <!-- 右上角的A -->
+            <path d="
+                M 72 34
+                L 82 48
+                H 78
+                L 72 38
+                L 66 48
+                H 62
+                L 72 34
+                Z
+            "
+            fill="#FF4B6E"
+            />
+
+            <!-- 左下角的A -->
+            <path d="
+                M 46 80
+                L 56 94
+                H 52
+                L 46 84
+                L 40 94
+                H 36
+                L 46 80
+                Z
+            "
+            fill="#FF4B6E"
+            transform="rotate(180 46 87)"
+            />
+        </svg>
+    `;
+
+    // 修改悬停效果，只改变缩放和阴影
+    logoButton.addEventListener('mouseover', () => {
+        logoButton.style.transform = 'translateY(-1px) scale(1.1)';
+        logoButton.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15))';
+    });
+
+    logoButton.addEventListener('mouseout', () => {
+        logoButton.style.transform = 'translateY(0) scale(1)';
+        logoButton.style.filter = 'none';
+    });
+
+    // 点击事件保持不变
+    logoButton.addEventListener('click', () => {
+        const infoPanel = document.getElementById('floating-ticket-key');
+        if (infoPanel) {
+            infoPanel.style.display = infoPanel.style.display === 'none' ? 'flex' : 'none';
+        } else {
+            checkAndDisplayTicketKey();
+        }
+    });
+
+    return logoButton;
+}
+
+// 修改checkAndDisplayTicketKey函数
+function checkAndDisplayTicketKey() {
+    try {
+        // 检查是否是ticket页面
+        if (!window.location.href.includes('/browse/')) {
+            const existingDisplay = document.getElementById('floating-ticket-key');
+            const existingLogo = document.getElementById('ticket-info-logo');
+            if (existingDisplay) existingDisplay.remove();
+            if (existingLogo) existingLogo.remove();
+            return;
+        }
+
+        // 从URL中提取ticket key
+        const match = window.location.pathname.match(/\/browse\/([^/]+)/);
+        if (!match) return;
+
+        const ticketKey = match[1];
+        console.log('Found ticket key:', ticketKey);
+
+        // 确保logo按钮存在
+        let logoButton = document.getElementById('ticket-info-logo');
+        if (!logoButton) {
+            logoButton = createLogoButton();
+            document.body.appendChild(logoButton);
+        }
+
+        // 检查是否已存在信息面板
+        let keyDisplay = document.getElementById('floating-ticket-key');
+        if (keyDisplay) {
+            // 更新内容但保持显示状态
+            const linkElement = keyDisplay.querySelector('a');
+            if (linkElement) {
+                linkElement.textContent = ticketKey;
+                linkElement.href = `/browse/${ticketKey}`;
+            }
+        } else {
+            // 创建新的信息面板，默认隐藏
+            keyDisplay = createTicketKeyDisplay(ticketKey);
+            keyDisplay.style.display = 'none';
+            document.body.appendChild(keyDisplay);
+        }
+    } catch (error) {
+        console.log('显示ticket key时出错:', error);
+    }
+}
+
+// 将checkAndDisplayTicketKey添加到现有的URL监听中
+const debouncedDisplayKey = debounce(checkAndDisplayTicketKey, 1000);
+
+// 修改现有的URL监听器
 let lastUrl = location.href;
 new MutationObserver(() => {
     const url = location.href;
     if (url !== lastUrl) {
         lastUrl = url;
         console.log('URL changed to', url);
-        setTimeout(debouncedCheck, 3000);
+        setTimeout(() => {
+            debouncedCheck();
+            debouncedDisplayKey();
+        }, 3000);
     }
 }).observe(document, {subtree: true, childList: true});
 
-// 页面加载完成后执行检查
+// 在页面加载完成后执行
 window.addEventListener('load', () => {
     console.log('页面加载完成，准备检查...');
-    setTimeout(debouncedCheck, 3000);
+    setTimeout(() => {
+        debouncedCheck();
+        debouncedDisplayKey();
+    }, 3000);
 });
 function testabc(){
     
 }
 // 初始检查
 console.log('初始化检查...');
-setTimeout(debouncedCheck, 3000);
+setTimeout(() => {
+    debouncedCheck();
+    debouncedDisplayKey();
+}, 3000);
   
