@@ -1,2 +1,2 @@
 # JiraAce
- a chrome extension for jira operation
+ a chrome extension for jira operation for Scrum Master @ RingCentral
