@@ -7,12 +7,10 @@
     "activeTab",
     "scripting"
   ],
-  "host_permissions": [
-    "https://jira.ringcentral.com/*"
-  ],
+  "host_permissions": ["https://jira.ringcentral.com/*", "https://ehealthinsurance.atlassian.net/*"],
   "content_scripts": [
     {
-      "matches": ["https://jira.ringcentral.com/*"],
+      "matches": ["https://jira.ringcentral.com/*", "https://ehealthinsurance.atlassian.net/*"],
       "js": ["content.js"],
       "run_at": "document_end"
     }

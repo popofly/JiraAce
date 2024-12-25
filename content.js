@@ -147,6 +147,27 @@ function createWarningElement(text, fieldId) {
             } catch (error) {
                 console.error(`Error finding ${text} field:`, error);
             }
+        } else {
+            // 获取点击的元素
+            const clickedElement = event.target;// 判断点击的元素是否是我们期望的 <span>
+            let targetDiv = null;
+            if (clickedElement.textContent === "NO EPIC LINK") {
+                console.log('Clicked on the "NO EPIC LINK" span.');
+                targetDiv = document.querySelector('span[data-testid="issue-field-parent.ui.view-read-view-empty-value"]');
+            } else if (clickedElement.textContent === "NO STORY POINT") {
+                console.log('Clicked on the "NO STORY POINT" span.');
+                targetDiv = document.querySelector('span[data-testid="issue-field-classic-story-point.ui.inline-view-field"]');
+            }
+            // 检查目标元素是否存在
+            if (targetDiv) {
+                // 滚动到目标元素
+                targetDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 聚焦到目标元素
+                targetDiv.focus();
+                targetDiv.click();
+            } else {
+                console.log('目标 <div> 元素不存在。');
+            }
         }
     });
 
@@ -183,11 +204,12 @@ async function checkEpicLink() {
         
         // 获取ticket类型
         const typeElement = document.getElementById('type-val');
-        const ticketType = typeElement ? typeElement.textContent.trim() : '';
+        const typeImgElement = document.querySelector('img[src*="issuetype/avatar"]');
+        const ticketType = typeElement ? typeElement.textContent.trim() : typeImgElement ? typeImgElement.alt : 'Element not found';
         console.log('Ticket类型:', ticketType);
         
         // 定义需要检查的ticket类型
-        const typesNeedingCheck = ['Technical task', 'Improvement', 'User Story', 'QA Task'];
+        const typesNeedingCheck = ['Technical task', 'Improvement', 'User Story', 'QA Task', 'Story'];
         const needsCheck = typesNeedingCheck.includes(ticketType);
         
         // 如果不是需要检查的类型，直接返回
@@ -202,7 +224,7 @@ async function checkEpicLink() {
         }
         
         // 定义需要Story Points的ticket类型（不包括QA Task）
-        const typesNeedingStoryPoints = ['Technical task', 'Improvement', 'User Story'];
+        const typesNeedingStoryPoints = ['Technical task', 'Improvement', 'User Story', 'Story'];
         const needsStoryPoints = typesNeedingStoryPoints.includes(ticketType);
         
         // 获取所有字段列表项
@@ -217,13 +239,32 @@ async function checkEpicLink() {
                 epicLinkField = field;
             }
         });
+
+        if(fields.length == 0){
+            // Select the <div> element using its class and data attributes
+            const parentIssueElement = document.querySelector('div[data-testid="issue-field-parent.ui.read-view-container"]');
+            // Check if the element exists
+            if (parentIssueElement) {                
+                if (parentIssueElement.querySelector('span[data-testid="issue-field-parent.ui.view-read-view-empty-value"]')) {
+                    console.log('The parent issue is "None".');
+                } else {
+                    epicLinkField = parentIssueElement.querySelector('a[data-testid="issue-field-parent.ui.view-link"]');
+                    console.log('The parent issue is ' + parentIssueElement.querySelector('a[data-testid="issue-field-parent.ui.view-link"]').textContent.trim());
+                }
+            } else {
+                console.log('The specified <div> element does not exist.');
+            }
+        }
         
         // 只在特定类型的ticket下才检查Story Points字段
-        const storyPointsField = needsStoryPoints ? document.getElementById('rowForcustomfield_10422') : null;
-        console.log('Story Points字段:', storyPointsField);
+        let storyPointsField = null;
+        if(needsStoryPoints){
+            storyPointsField = document.getElementById('rowForcustomfield_10422') ? document.getElementById('rowForcustomfield_10422') : document.querySelector('span[data-testid="issue-field-classic-story-point.ui.inline-view-field"]');
+            console.log('Story Points字段:', storyPointsField);
+        }
         
         // 获取标题元素
-        const titleElement = document.querySelector('#summary-val');
+        const titleElement = document.querySelector('#summary-val') ? document.querySelector('#summary-val'):document.querySelector('h1[data-testid="issue.views.issue-base.foundation.summary.heading"]');
         
         if (titleElement) {
             // 获取或创建警告容器
@@ -234,7 +275,7 @@ async function checkEpicLink() {
             }
 
             // 检查并显示Epic Link警告
-            const epicLinkElement = document.querySelector('#customfield_11450-val');
+            const epicLinkElement = document.querySelector('#customfield_11450-val') ? document.querySelector('#customfield_11450-val'): epicLinkField;
             console.log('Epic Link元素:', epicLinkElement);
 
             let hasEpicLink = false;
@@ -242,6 +283,10 @@ async function checkEpicLink() {
                 const epicLinkValue = epicLinkElement.querySelector('a.aui-label');
                 if (epicLinkValue) {
                     const linkText = epicLinkValue.textContent.trim();
+                    hasEpicLink = linkText && linkText !== '';
+                    console.log('Epic Link值:', linkText, '是否有效:', hasEpicLink);
+                } else {
+                    const linkText = epicLinkElement.textContent.trim();
                     hasEpicLink = linkText && linkText !== '';
                     console.log('Epic Link值:', linkText, '是否有效:', hasEpicLink);
                 }
@@ -264,7 +309,7 @@ async function checkEpicLink() {
 
             // 只在需要Story Points的ticket类型下显示Story Points警告
             if (needsStoryPoints) {
-                if (!storyPointsField || !storyPointsField.textContent.trim()) {
+                if (!storyPointsField || !storyPointsField.textContent.trim() || storyPointsField.textContent == 'None') {
                     if (!document.getElementById('no-story-point')) {
                         const storyPointWarning = createWarningElement('NO STORY POINT', 'customfield_10422');
                         warningsContainer.appendChild(storyPointWarning);
@@ -350,7 +395,7 @@ function createTicketKeyDisplay(ticketKey) {
     `;
 
     // 获取summary
-    const titleElement = document.querySelector('#summary-val');
+    const titleElement = document.querySelector('#summary-val') ? document.querySelector('#summary-val') : document.querySelector('h1[data-testid="issue.views.issue-base.foundation.summary.heading"]');
     const summary = titleElement ? titleElement.textContent.trim() : '';
 
     // 创建链接元素（第一行）
