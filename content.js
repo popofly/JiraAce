@@ -353,6 +353,10 @@ function createTicketKeyDisplay(ticketKey) {
     const titleElement = document.querySelector('#summary-val');
     const summary = titleElement ? titleElement.textContent.trim() : '';
 
+    //获取status
+    const statusElement = document.querySelector('#opsbar-transitions_more');
+    const status = statusElement ? statusElement.textContent.trim() : '';
+
     // 创建链接元素（第一行）
     const keyLink = document.createElement('a');
     keyLink.href = `/browse/${ticketKey}`;
@@ -431,6 +435,14 @@ function createTicketKeyDisplay(ticketKey) {
                         text = `${summary} (${ticketKey})`;
                         htmlText = `${summary} (<a href="${fullUrl}" target="_blank">${ticketKey}</a>)`;
                         break;
+                    case 'keySummary':
+                        text = `${ticketKey} ${summary}`;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${ticketKey}</a> ${summary}`;
+                        break;
+                    case 'keySummaryStatus':
+                        text = `${ticketKey} ${summary} (${status})`;
+                        htmlText = `<a href="${fullUrl}" target="_blank">${ticketKey}</a> ${summary} (${status})`;
+                        break;
                 }
 
                 const clipboardData = new ClipboardItem({
@@ -453,7 +465,7 @@ function createTicketKeyDisplay(ticketKey) {
         return button;
     }
 
-    // 创建两个复制按钮
+    // 创建三个复制按钮
     const keyCopyButton = createCopyButton('key');
     const summaryCopyButton = createCopyButton('summary');
 
@@ -514,6 +526,113 @@ function createTicketKeyDisplay(ticketKey) {
     titleKeyRow.appendChild(titleKeyLink);
     titleKeyRow.appendChild(closingSpan);
     titleKeyRow.appendChild(titleKeyCopyButton);
+    
+    
+    // 组装第四行，格式 RCV-XXX Some_Summary_Description
+    
+    // 修改第四行的创建部分
+    const keySummaryRow = document.createElement('div');
+    keySummaryRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+
+    // 创建标题文本元素（非链接）
+    const keySummaryTitleSpan = document.createElement('span');
+    keySummaryTitleSpan.style.cssText = `
+        color: white;
+        max-width: 300px;
+        display: inline-block;
+    `;
+
+    // 处理标题文本
+    const keySummaryTitleText = summary.length > 45 ? 
+        summary.substring(0, 21) + '...' + summary.substring(summary.length - 21) :
+        summary;
+    keySummaryTitleSpan.textContent = keySummaryTitleText;
+    keySummaryTitleSpan.title = summary; // 完整文本作为tooltip
+
+    // 创建ticket key链接 - 改名为keySummaryTitleKeyLink
+    const keySummaryTitleKeyLink = document.createElement('a');
+    keySummaryTitleKeyLink.href = `/browse/${ticketKey}`;
+    keySummaryTitleKeyLink.textContent = ticketKey;
+    keySummaryTitleKeyLink.target = '_blank';
+    keySummaryTitleKeyLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+
+
+    // 在第四行组装之前添加复制按钮的创建
+    const keySummaryTitleKeyCopyButton = createCopyButton('keySummary');
+
+    // 组装第四行
+    keySummaryRow.appendChild(keySummaryTitleKeyLink);
+    keySummaryRow.appendChild(keySummaryTitleSpan);
+    keySummaryRow.appendChild(keySummaryTitleKeyCopyButton);
+    
+    
+    //第四行组装结束
+
+
+    // 组装第五行，格式 RCV-XXX Some_Summary_Description （status)
+    
+    // 修改第五行的创建部分
+    const keySummaryStatusRow = document.createElement('div');
+    keySummaryStatusRow.style.cssText = `
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+    `;
+
+
+    // 创建标题文本元素（非链接）
+    const keySummaryTitleStatusSpan = document.createElement('span');
+    keySummaryTitleStatusSpan.style.cssText = `
+        color: white;
+        max-width: 300px;
+        display: inline-block;
+    `;
+
+    // 处理标题文本
+    const keySummaryTitleStatusText = summary.length > 34 ? 
+        summary.substring(0, 15) + '...' + summary.substring(summary.length - 15) :
+        summary;
+        keySummaryTitleStatusSpan.textContent = keySummaryTitleStatusText +" ("+ status +")";
+        keySummaryTitleStatusSpan.title = summary; // 完整文本作为tooltip
+
+    // 创建ticket key链接 - 改名为keySummaryTitleStatusKeyLink
+    const keySummaryTitleStatusKeyLink = document.createElement('a');
+    keySummaryTitleStatusKeyLink.href = `/browse/${ticketKey}`;
+    keySummaryTitleStatusKeyLink.textContent = ticketKey;
+    keySummaryTitleStatusKeyLink.target = '_blank';
+    keySummaryTitleStatusKeyLink.style.cssText = `
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+    `;
+
+
+
+    // 在第五行组装之前添加复制按钮的创建
+    const keySummaryTitleStatusKeyCopyButton = createCopyButton('keySummaryStatus'); 
+
+    // 组装第五行
+    keySummaryStatusRow.appendChild(keySummaryTitleStatusKeyLink);
+    keySummaryStatusRow.appendChild(keySummaryTitleStatusSpan);
+    keySummaryStatusRow.appendChild(keySummaryTitleStatusKeyCopyButton);
+    
+    
+    //第五行组装结束
+
 
     // 添加悬停效果
     container.addEventListener('mouseover', () => {
@@ -532,6 +651,8 @@ function createTicketKeyDisplay(ticketKey) {
     container.appendChild(keyRow);
     container.appendChild(summaryRow);
     container.appendChild(titleKeyRow);
+    container.appendChild(keySummaryRow);
+    container.appendChild(keySummaryStatusRow);
 
     return container;
 }
