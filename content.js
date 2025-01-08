@@ -465,7 +465,7 @@ function createTicketKeyDisplay(ticketKey) {
         return button;
     }
 
-    // 创建三个复制按钮
+    // 创建两个复制按钮
     const keyCopyButton = createCopyButton('key');
     const summaryCopyButton = createCopyButton('summary');
 
